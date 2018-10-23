@@ -8,7 +8,7 @@
   <script>
     'use strict'
     if(!window.location.hash){
-      window.location.hash = "1986-03-22"
+      window.location.hash = "1990-03-10"
     }
     function update () {
       _el.textContent = `${((new Date()-new Date(window.location.hash.replace("#","")))/31557600000).toFixed(9)}`

@@ -1,7 +1,7 @@
 # Age Display
 
-Simple display of [years passed since date](https://neauoire.github.io/age/#1986-03-22) in url, with 9 decimals.
+Simple display of [years passed since date](http://age.dackdel.com/#1990-03-10) in url, with 9 decimals.
 
 ```
-https://neauoire.github.io/age/#1986-03-22
+http://age.dackdel.com/#1990-03-10
 ```
