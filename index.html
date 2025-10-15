@@ -2,27 +2,185 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Age</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Real-time age calculator displaying years since your birth date with precision">
+  <title>Age Calculator</title>
 </head>
 <body>
+  <main role="main" aria-label="Age display">
+    <header>
+      <h1 class="visually-hidden">Your Age in Years</h1>
+    </header>
+    <div id="age-display" role="timer" aria-live="polite" aria-atomic="true" aria-label="Current age in years"></div>
+    <div id="error-message" role="alert" aria-live="assertive" class="error-hidden"></div>
+  </main>
   <script>
     'use strict'
+    
+    const _el = document.getElementById('age-display');
+    const _errorEl = document.getElementById('error-message');
+    
     if(!window.location.hash){
       window.location.hash = "1990-03-10"
     }
-    function update () {
-      _el.textContent = `${((new Date()-new Date(window.location.hash.replace("#","")))/31557600000).toFixed(9)}`
+    
+    function isValidDate(dateString) {
+      let formattedDate = dateString;
+      
+      // Check if it's compact format (YYYYMMDD) and convert to YYYY-MM-DD
+      const compactRegex = /^(\d{4})(\d{2})(\d{2})$/;
+      if (compactRegex.test(dateString)) {
+        const match = dateString.match(compactRegex);
+        formattedDate = `${match[1]}-${match[2]}-${match[3]}`;
+      }
+      
+      // Check format (YYYY-MM-DD)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formattedDate)) {
+        return { valid: false, error: 'Invalid format. Use YYYY-MM-DD or YYYYMMDD (e.g., #1990-03-10 or #19900310)' };
+      }
+      
+      // Check if it's a real date
+      const date = new Date(formattedDate);
+      if (isNaN(date.getTime())) {
+        return { valid: false, error: 'I am afraid we must administer the Voight-Kampff test.' };
+      }
+      
+      return { valid: true, date: date, isFuture: date > new Date() };
     }
+    
+    function showError(message) {
+      _errorEl.textContent = message;
+      _errorEl.classList.remove('error-hidden');
+      _el.classList.add('error-hidden');
+    }
+    
+    function hideError() {
+      _errorEl.classList.add('error-hidden');
+      _el.classList.remove('error-hidden');
+    }
+    
+    function update () {
+      const dateString = window.location.hash.replace("#", "");
+      const validation = isValidDate(dateString);
+      
+      if (!validation.valid) {
+        showError(validation.error);
+        return;
+      }
+      
+      hideError();
+      const ageValue = (new Date() - validation.date) / 31557600000;
+      
+      if (validation.isFuture) {
+        _el.textContent = `-${Math.abs(ageValue).toFixed(9)}`;
+        _el.classList.add('future-date');
+      } else {
+        _el.textContent = ageValue.toFixed(9);
+        _el.classList.remove('future-date');
+      }
+    }
+    
     function start () {
       setTimeout(() => { update(); requestAnimationFrame(start); }, 1000/30);
     }
-    const _el = document.createElement('div')
-    document.body.appendChild(_el);
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', update);
+    
+    // Invisible input for seamless date entry
+    const hiddenInput = document.createElement('input');
+    hiddenInput.inputMode = 'numeric';
+    hiddenInput.pattern = '[0-9]*';
+    hiddenInput.maxLength = 8;
+    hiddenInput.style.cssText = 'position:absolute;opacity:0;top:0;left:0;width:1px;height:1px;border:none;outline:none;pointer-events:none;';
+    document.body.appendChild(hiddenInput);
+    
+    // Desktop: keyboard listener for invisible typing
+    if (!('ontouchstart' in window)) {
+      let inputBuffer = '';
+      let bufferTimeout = null;
+      
+      document.addEventListener('keypress', (e) => {
+        if (e.key >= '0' && e.key <= '9') {
+          e.preventDefault();
+          inputBuffer += e.key;
+          clearTimeout(bufferTimeout);
+          
+          if (inputBuffer.length === 8) {
+            window.location.hash = inputBuffer;
+            inputBuffer = '';
+          } else {
+            bufferTimeout = setTimeout(() => { inputBuffer = ''; }, 2000);
+          }
+        }
+      });
+    }
+    
+    // Mobile: tap to focus hidden input
+    document.addEventListener('click', () => {
+      if ('ontouchstart' in window) {
+        hiddenInput.style.pointerEvents = 'auto';
+        hiddenInput.focus();
+        hiddenInput.style.pointerEvents = 'none';
+      }
+    });
+    
+    // Auto-submit and blur on 8 digits
+    hiddenInput.addEventListener('input', (e) => {
+      const value = e.target.value.replace(/\D/g, '');
+      
+      if (value.length === 8) {
+        window.location.hash = value;
+        hiddenInput.value = '';
+        hiddenInput.blur();
+      }
+    });
+    
     start();
   </script>
   <style>
-    @font-face { font-family: 'archivo_thin'; src: url('archivo_thin.ttf') format('truetype'); font-weight: normal; font-style: normal; }
-    body { background:black; color:white; text-align: center; padding-top:40vh; font-size:60px; font-family: 'archivo_thin'; letter-spacing: -4px; }
+    @font-face { 
+      font-family: 'Archivo'; 
+      src: url('Archivo-VariableFont_wdth,wght.ttf') format('truetype-variations');
+      font-weight: 100 900;
+      font-stretch: 62.5% 125%;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background:black; color:white; font-family: 'Archivo', sans-serif; min-height: 100vh; }
+    main { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; }
+    #age-display { 
+      font-size:clamp(24px, 8vw, 60px); 
+      letter-spacing: clamp(0px, 0.2vw, 2px); 
+      transition: color 0.3s ease; 
+      user-select: none; 
+      cursor: default; 
+      caret-color: transparent;
+      font-weight: 100;
+      font-stretch: 100%;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    @keyframes breathe {
+      0%, 100% { 
+        font-stretch: 100%; 
+        font-weight: 100;
+        opacity: 1; 
+      }
+      50% { 
+        font-stretch: 105%; 
+        font-weight: 150;
+        opacity: 0.85; 
+      }
+    }
+    
+    #age-display:hover {
+      animation: breathe 4.5s ease-in-out infinite;
+    }
+    #age-display.future-date { color: #ff6b6b; }
+    #error-message { color: #ff6b6b; font-size: clamp(16px, 4vw, 24px); padding: 20px; max-width: 600px; line-height: 1.5; }
+    .error-hidden { display: none; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   </style>
 </body>
 </html>
