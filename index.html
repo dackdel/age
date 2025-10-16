@@ -161,22 +161,6 @@
       font-variant-numeric: tabular-nums;
     }
     
-    @keyframes breathe {
-      0%, 100% { 
-        font-stretch: 100%; 
-        font-weight: 100;
-        opacity: 1; 
-      }
-      50% { 
-        font-stretch: 105%; 
-        font-weight: 150;
-        opacity: 0.85; 
-      }
-    }
-    
-    #age-display:hover {
-      animation: breathe 4.5s ease-in-out infinite;
-    }
     #age-display.future-date { color: #ff6b6b; }
     #error-message { color: #ff6b6b; font-size: clamp(16px, 4vw, 24px); padding: 20px; max-width: 600px; line-height: 1.5; }
     .error-hidden { display: none; }
